@@ -19,7 +19,7 @@ EM_JS(void, js_frame, (unsigned *scr, int *cell, int y0, int y1, int x0, int x1,
 EM_JS(void, be_msg, (const char *s, int fold), { Module.hk.msg(UTF8ToString(s), fold); });
 EM_JS(void, js_cursor, (int y, int x), { Module.hk.cursor(y, x); });
 EM_JS(void, js_vis, (const char *s), { Module.hk.vis(UTF8ToString(s)); });
-EM_JS(int, js_key, (void), { return Module.hk.key(); });
+EM_JS(int, js_key, (int at_cmd), { return Module.hk.key(at_cmd); });
 EM_JS(void, js_inv, (const char *s), { Module.hk.inv(UTF8ToString(s)); });
 EM_JS(int, js_want_save, (void), { return Module.hk.wantSave(); });
 EM_ASYNC_JS(void, js_end, (int saved), { await Module.hk.end(saved); });   /* before exit closes IndexedDB */
@@ -77,7 +77,7 @@ int be_getkey(int wait)
             rl_autosave();
             rl_at_prompt = 1;
         }
-        if ((k = js_key()) >= 0) {
+        if ((k = js_key(rl_at_prompt)) >= 0) {
             if (be_menu) switch (k) {   /* menus: arrows must not look like item letters */
             case 0x101: case 0x102: case 0x103: case 0x104: return k;
             }
