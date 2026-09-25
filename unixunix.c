@@ -258,6 +258,9 @@ veryold(fd) {
 	return(1);					/* success! */
 }
 
+#ifdef __EMSCRIPTEN__	/* RVIP web: no hard links; one player per browser */
+#define link(a, b) (close(creat(b, FMASK)), 0)
+#endif
 getlock()
 {
 	extern int errno, hackpid, locknum;

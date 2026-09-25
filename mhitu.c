@@ -479,9 +479,9 @@ register struct monst *mtmp;
 	    sscanf(buf, "%d", &offer);
 
 	    if(offer >= u.ugold) {
-		pline("You give %s all your gold.", xmonnam(mtmp));
+		pline("You give %s all your gold.", xmonnam(mtmp, 0));
 		offer = u.ugold;
-	    } else pline("You give %s %d Zorkmids.", xmonnam(mtmp), offer);
+	    } else pline("You give %s %d Zorkmids.", xmonnam(mtmp, 0), offer);
 	    u.ugold -= offer;
 
 	    if(offer >= demand) {

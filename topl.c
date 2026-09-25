@@ -21,6 +21,10 @@ struct topl {
 	struct topl *next_topl;
 	char *topl_text;
 } *old_toplines, *last_redone_topl;
+/* RVIP auto_more: message --More-- no longer waits; ^P recalls, the web
+   build shows every message in its message window (be_msg). */
+int auto_more = 1;
+void be_msg();
 #define	OTLMAX	20		/* max nr of old toplines remembered */
 
 doredotopl(){
@@ -43,13 +47,24 @@ redotoplin() {
 	tlx = curx;
 	tly = cury;
 	flags.toplin = 1;
-	if(tly > 1)
+	if(tly > 1 && !auto_more)
 		more();
+}
+
+static
+skipmore() {
+	if(tly > 1) {
+		home();
+		cl_end();
+		docorner(1, tly - 1);
+	}
+	flags.toplin = 0;
 }
 
 remember_topl() {
 register struct topl *tl;
 register int cnt = OTLMAX;
+	be_msg(toplines);
 	if(last_redone_topl &&
 	   !strcmp(toplines, last_redone_topl->topl_text)) return;
 	if(old_toplines &&
@@ -125,16 +140,16 @@ clrlin(){
 
 /*VARARGS1*/
 /* Because the modified mstatusline has 9 arguments KAA */
-pline(line,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9)
-register char *line,*arg1,*arg2,*arg3,*arg4,*arg5,*arg6,*arg7,*arg8,*arg9;
+pline(const char *line, ...)	/* RVIP: stdarg (wasm) */
 {
+	va_list ap;
 	char pbuf[BUFSZ];
 	register char *bp = pbuf, *tl;
 	register int n,n0;
 
 	if(!line || !*line) return;
 	if(!index(line, '%')) (void) strcpy(pbuf,line); else
-	(void) sprintf(pbuf,line,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+	{ va_start(ap, line); (void) vsnprintf(pbuf, BUFSZ, line, ap); va_end(ap); }
 	if(flags.toplin == 1 && !strcmp(pbuf, toplines)) return;
 	nscr();		/* %% */
 
@@ -163,7 +178,10 @@ register char *line,*arg1,*arg2,*arg3,*arg4,*arg5,*arg6,*arg7,*arg8,*arg9;
 		addtopl(bp);
 		return;
 	}
-	if(flags.toplin == 1) more();
+	if(flags.toplin == 1) {
+		if(auto_more) skipmore();
+		else more();
+	}
 	remember_topl();
 	toplines[0] = 0;
 	while(n0){

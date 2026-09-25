@@ -12,3 +12,5 @@ unix.c
 .hg
 save/
 *.dSYM
+web/dist/
+web/seed/

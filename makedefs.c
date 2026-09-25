@@ -565,12 +565,12 @@ digit(ch) register char ch; {
 
 boolean	panicking = 0;
 
-panic(str,a1,a2,a3,a4,a5,a6)
-char *str;
+panic(const char *str, ...)	/* RVIP: stdarg */
 {
+	va_list ap;
 	if(panicking++) exit(1);    /* avoid loops - this should never happen*/
 	fputs(" ERROR:  ", stdout);
-	printf(str,a1,a2,a3,a4,a5,a6);
+	va_start(ap, str); vprintf(str, ap); va_end(ap);
 #ifdef DEBUG
 # ifdef UNIX
 	if(!fork())

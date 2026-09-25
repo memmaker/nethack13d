@@ -143,10 +143,11 @@ register int change = 0;
 
 /* fatal error */
 /*VARARGS1*/
-error(s,x,y) char *s, *x, *y; {
+error(const char *s, ...) {	/* RVIP: stdarg (wasm) */
+	va_list ap;
 	if(settty_needed)
 		settty((char *) 0);
-	printf(s,x,y);
+	va_start(ap, s); vfprintf(stdout, s, ap); va_end(ap);
 	putchar('\n');
 	exit(1);
 }

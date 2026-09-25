@@ -1,6 +1,23 @@
 # NetHack 1.3d — RVIP
 
 ## RVIP progress
+- Stage 7 (web) done (2026-09-25): https://ruzzoli.de/roguelikes/nethack13d/
+  - Files: `port/be_web.c`, `port/termcap-web.c`, `port/web-inc/`
+    (hkio.h, sgtty.h stub), `port/proto.h`, `web/` (nethack.js, index.html,
+    make-help.py, build.sh, deploy.sh). Build `sh web/build.sh`.
+  - Windows as Hack: map, Messages, Status + Inventory (right of the map;
+    C `rl_invtext()` at the command prompt → `js_inv`). Fixed width, no gutter.
+  - wasm traps fixed: `port/proto.h` (force-included via compat.h, native
+    too) prototypes K&R functions; pline/panic/impossible/error are stdarg
+    now; mhitu `xmonnam` got its 2nd arg. `-fcommon`, gnu99.
+  - Web: `link()` unsupported → macro in `getlock` (unixunix.c); page sets
+    `HACKDIR`; `-u <name>` from the save file so reload restores.
+  - Autosave `rl_autosave()` (port/rl.c) as Hack; unshuffles oc_descr before
+    `dorecover` (restnames expects it). X11 test knob `HACK_AUTOSAVE=1`.
+  - `auto_more` (topl.c, as Hack c6fc008) on by default; `be_msg` hook.
+  - deploy.sh has Hack's push guard; stage 8 must add own remote first
+    (stage 7 was rsynced by hand).
+  - Next: stage 8 (publish).
 - Stage 6 done (2026-09-25). Next: stage 7 (web, as Hack: C picks tiles, JS blits).
   - Docs: `nethack13d.html` via `parse_hack()` (reads root `hh`) + GAMES entry
     in `~/Desktop/Games/Roguelikes/Docs/build-docs.py`; guide + saving in

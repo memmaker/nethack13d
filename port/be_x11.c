@@ -168,6 +168,7 @@ void be_frame(chtype s[][80])
     }
 }
 
+void be_msg(const char *s) { }
 void be_cursor(int y, int x) { cy = y; cx = x; }
 
 void be_flush(void)
@@ -217,9 +218,14 @@ static int keycode(XKeyEvent *ev)
         return n == 1 ? (unsigned char)buf[0] : -1;
 }
 
+extern int rl_at_prompt;
+void rl_autosave(void);
 int be_getkey(int wait)
 {
     XEvent ev;
+    static int test = -1;
+    if (test < 0) test = !!getenv("HACK_AUTOSAVE");
+    if (test && rl_at_prompt) { rl_at_prompt = 0; rl_autosave(); rl_at_prompt = 1; }
     for (;;) {
         if (!wait && !XPending(dpy)) return -1;
         XNextEvent(dpy, &ev);

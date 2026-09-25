@@ -463,10 +463,12 @@ register int c,ct;
 }
 
 /*VARARGS1*/
-impossible(s,x1,x2)
-register char *s, *x1, *x2;
+impossible(const char *s, ...)	/* RVIP: stdarg (wasm) */
 {
-	pline(s,x1,x2);
+	char buf[BUFSZ];
+	va_list ap;
+	va_start(ap, s); vsnprintf(buf, sizeof buf, s, ap); va_end(ap);
+	pline("%s", buf);
 	pline("Program in disorder - perhaps you'd better Quit.");
 }
 

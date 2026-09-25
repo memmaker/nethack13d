@@ -115,9 +115,9 @@ static char buf[BUFSZ];
 /*VARARGS1*/
 boolean panicking;
 
-panic(str,a1,a2,a3,a4,a5,a6)
-char *str, *a1, *a2, *a3, *a4, *a5, *a6;
+panic(const char *str, ...)	/* RVIP: stdarg (wasm) */
 {
+	va_list ap;
 	if(panicking++) abort();    /* avoid loops - this should never happen*/
 				    /* was exit(1) */
 #ifdef LIVELOGFILE
@@ -126,7 +126,7 @@ char *str, *a1, *a2, *a3, *a4, *a5, *a6;
 	home(); cls();
 	puts(" Suddenly, the dungeon collapses.");
 	fputs(" ERROR:  ", stdout);
-	printf(str,a1,a2,a3,a4,a5,a6);
+	va_start(ap, str); vfprintf(stdout, str, ap); va_end(ap);
 	more();				/* contains a fflush() */
 #ifdef WIZARD
 # ifdef UNIX
