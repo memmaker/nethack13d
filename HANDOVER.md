@@ -20,4 +20,4 @@
   - Quirks: argv[0] must contain a `/` (gethdate stats it via PATH);
     termcap padding `$<2>` printed literally — VT layer must strip it;
     a killed game leaves `save/<user>.0` lock.
-  - Tiles: ask user (todo says "ask").
+  - Tiles (user): DawnLike default + NetHack switchable, as Hack.
