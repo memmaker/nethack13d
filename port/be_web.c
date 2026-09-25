@@ -13,10 +13,12 @@ extern int rl_at_prompt, rl_saved;
 extern char SAVEF[];
 void rl_autosave(void);
 char *rl_invtext(void);
+const char *rl_css(int olet);
 
 EM_JS(void, js_frame, (unsigned *scr, int *cell, int y0, int y1, int x0, int x1, int hy, int hx, int lev), { Module.hk.frame(scr, cell, y0, y1, x0, x1, hy, hx, lev); });
 EM_JS(void, be_msg, (const char *s, int fold), { Module.hk.msg(UTF8ToString(s), fold); });
 EM_JS(void, js_cursor, (int y, int x), { Module.hk.cursor(y, x); });
+EM_JS(void, js_vis, (const char *s), { Module.hk.vis(UTF8ToString(s)); });
 EM_JS(int, js_key, (void), { return Module.hk.key(); });
 EM_JS(void, js_inv, (const char *s), { Module.hk.inv(UTF8ToString(s)); });
 EM_JS(int, js_want_save, (void), { return Module.hk.wantSave(); });
@@ -54,6 +56,21 @@ int be_getkey(int wait)
     int k;
     static char inv[52 * 80];
     if (rl_at_prompt && strcmp(inv, rl_invtext())) js_inv(strcpy(inv, rl_invtext()));
+    if (rl_at_prompt) {   /* Visible window: "M<glyph><name>" / "I<glyph><name>\t<colour>" (rvip-wm.js) */
+        static char vis[8192];
+        char *p = vis, *e = vis + sizeof vis - 100;
+        struct monst *m;
+        struct obj *o;
+        struct gold *g;
+        *p = 0;
+        for (m = fmon; m && p < e; m = m->nmon)
+            if (!m->mimic && canseemon(m)) p += sprintf(p, "M%c%.60s\n", m->data->mlet, m->data->mname);
+        for (o = fobj; o && p < e; o = o->nobj)
+            if (cansee(o->ox, o->oy)) p += sprintf(p, "I%c%.80s\t%s\n", o->olet, doname(o), rl_css(o->olet));
+        for (g = fgold; g && p < e; g = g->ngold)
+            if (cansee(g->gx, g->gy)) p += sprintf(p, "I$%ld gold pieces\t#ffe040\n", (long)g->amount);
+        js_vis(vis);
+    }
     for (;;) {
         if (rl_at_prompt && js_want_save()) {
             rl_at_prompt = 0;

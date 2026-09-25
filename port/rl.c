@@ -344,6 +344,28 @@ static char *parse1(void)
 }
 
 /* web Inventory window: one line per item, at the command prompt only */
+/* Angband's colour for an object class (RVIP W0: colours come from the game) */
+const char *rl_css(int olet)
+{
+    switch (olet) {
+    case AMULET_SYM: return "#ff9000";
+    case FOOD_SYM:   return "#d09050";
+    case WEAPON_SYM: return "#b0b0b8";
+    case TOOL_SYM:   return "#c0c0c0";
+    case ARMOR_SYM:  return "#a07040";
+    case POTION_SYM: return "#40a0ff";
+    case SCROLL_SYM: return "#ffffff";
+    case WAND_SYM:   return "#40d040";
+    case RING_SYM:   return "#ff4040";
+    case GEM_SYM:    return "#ff60ff";
+#ifdef SPELLS
+    case SPBOOK_SYM: return "#60e0e0";
+#endif
+    }
+    return "";
+}
+
+/* Inventory window: "<css colour>\ta - item" per line */
 char *rl_invtext(void)
 {
     static char b[52 * 80];
@@ -351,6 +373,6 @@ char *rl_invtext(void)
     int n = 0;
     b[0] = 0;
     for (o = invent; o && n < (int)sizeof b - 80; o = o->nobj)
-        n += snprintf(b + n, 80, "%c - %.74s\n", obj_to_let(o), doname(o));
+        n += snprintf(b + n, 80, "%s\t%c - %.64s\n", rl_css(o->olet), obj_to_let(o), doname(o));
     return b;
 }
