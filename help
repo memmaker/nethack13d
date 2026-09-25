@@ -88,6 +88,7 @@ Commands:
 	q	drink (quaff) a potion.
 	r	read a scroll.
 	T	Takeoff armor.
+	A	Take off all armor.
 	R	Remove Ring.
 	W	Wear armor.
 	P	Put on a ring.
@@ -124,6 +125,10 @@ Commands:
 		Usually one will not want to use the 'O' command, but instead
 		put a HACKOPTIONS="...." line in one's environment.
 	v	print version number.
+	V	print version details.
+	@	toggle automatic pickup.
+	#	extended command: #cast, #dip, #pray, #sit, #? lists them.
+	Enter	this command list as a menu; i: inventory with a cursor.
 
 	You can put a number before a command to repeat it that many times,
 	as in "20s" or "40.".

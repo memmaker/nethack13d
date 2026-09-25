@@ -1,6 +1,16 @@
 # NetHack 1.3d — RVIP
 
 ## RVIP progress
+- Stage 3 done (2026-09-25). Next: stage 4 (tiles: DawnLike default + NetHack switchable, as Hack).
+  - Ported from Hack's `port/rl.c`: Enter = `cmd_menu()` (parses `Commands:`
+    lines of `help`, "\t<key>\t<text>") plus every `extcmdlist` entry as
+    "#  name: desc" (choosing pushes "name\n" via `vt_push` after `#`).
+    help gained A, V, @, # lines.
+  - `i` = `inv_menu()` / `item_menu()` / `act()`; getobj() (invent.c) returns
+    `rl_obj` once and its first key comes from `rl_pick(lets)`. 1.3d extras:
+    spellbook main action `X` (transcribe), `#dip` in every item menu.
+  - Tested live: Enter menu (scrolls), #pray from menu, i -> bow -> wield,
+    `t` prompt cursor list; 400 random keys, game alive.
 - Stage 2 done (2026-09-25). Next: stage 3 (Enter menu + inventory).
   - X11 window: `port/vt.c`, `vt.h`, `be_x11.c` from Hack (title
     "NetHack 1.3d"); vt.c also strips termcap padding `$<n>`.

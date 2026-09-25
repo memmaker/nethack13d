@@ -308,7 +308,14 @@ register char *let,*word;
 	boolean allownone = FALSE;
 	xchar foox = 0;
 	long cnt;
+	extern struct obj *rl_obj;
+	extern int rl_pick();
 
+	if(rl_obj) {		/* RVIP: chosen in the inventory menu */
+		otmp = rl_obj;
+		rl_obj = 0;
+		return(otmp);
+	}
 	if(*let == '0') let++, allowcnt = 1;
 	if(*let == '$') let++, allowgold = TRUE;
 	if(*let == '#') let++, allowall = TRUE;
@@ -380,7 +387,7 @@ register char *let,*word;
 		}
 
 		cnt = 0;
-		ilet = readchar();
+		ilet = rl_pick(lets);	/* RVIP: cursor list */
 		while(digit(ilet) && allowcnt) {
 #ifdef REDO
 			if (ilet != '?' && ilet != '*')	savech(ilet);
