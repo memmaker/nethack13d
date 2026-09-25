@@ -99,3 +99,8 @@
 - Repo https://github.com/memmaker/nethack13d (remote `memmaker`, branch `master`), upstream bhaak @ bcec982, README.md links compare view.
 - Game redeployed via `web/deploy.sh`; card + tree link (NetHack node → nethack13d/) live on the index; card has no Info button yet.
 - Next: stage 9 shrine (`shrine/nethack13d.html`, add Info button + tree ✦).
+
+### Stage 9 shrine (done)
+- https://ruzzoli.de/roguelikes/shrine/nethack13d.html live; card Info, tree ✦, game title link checked (200).
+- Only one screenshot (steps): `shot.js` doesn't capture text windows/pop-ups, and level 1 stairs weren't found for a fight shot. Add title/fight/inventory shots later.
+- No walkthrough for 1.3d found; manual = nethack.6 + help copied.
