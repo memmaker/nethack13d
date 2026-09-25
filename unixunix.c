@@ -50,7 +50,7 @@ getyear()
 }
 
 char *
-getdate()
+hgetdate()
 {
 	static char datestr[10];
 	register struct tm *lt = getlt();
@@ -99,7 +99,7 @@ time_t date;
     if (date == 0)
         lt = getlt();
     else
-        lt = localtime((time_t) &date);
+        lt = localtime((time_t *) &date);
 
     timenum = lt->tm_hour * 10000L + lt->tm_min * 100L + lt->tm_sec;
     return timenum;

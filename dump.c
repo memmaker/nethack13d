@@ -19,6 +19,7 @@ char dump_fn[] = DUMP_FN;
 # endif
 extern char msgs[][BUFSZ];
 extern int lastmsg;
+extern char *iso8601();
 void do_vanquished(int, int);
 extern char plname[];
 

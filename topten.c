@@ -168,7 +168,7 @@ topten(){
 	FILE *xlfile;
 #endif
 	register flg = 0;
-	extern char *getdate();
+	extern char *hgetdate();
 #ifndef DGK
 #define	HUP	if(!done_hup)
 #else
@@ -208,7 +208,7 @@ topten(){
 	(t0->name)[NAMSZ] = 0;
 	(void) strncpy(t0->death, killer, DTHSZ);
 	(t0->death)[DTHSZ] = 0;
-	(void) strcpy(t0->date, getdate());
+	(void) strcpy(t0->date, hgetdate());
 
 	t0->birthdate = yyyymmdd(u.ubirthday);
 	t0->deathdate = yyyymmdd(u.udeathday);

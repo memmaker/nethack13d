@@ -143,7 +143,7 @@ register int change = 0;
 
 /* fatal error */
 /*VARARGS1*/
-error(s,x,y) char *s; {
+error(s,x,y) char *s, *x, *y; {
 	if(settty_needed)
 		settty((char *) 0);
 	printf(s,x,y);

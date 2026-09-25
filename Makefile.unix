@@ -60,13 +60,13 @@ HOBJ = alloc.o apply.o bones.o cmd.o decl.o do.o do_name.o do_wear.o\
 $(GAME):	specifics $(HOBJ) Makefile
 	@echo "Loading ..."
 #	@ld $(LFLAGS) -o $(GAME) /lib/crt0.o $(HOBJ) $(TERMLIB) -lc
-	@cc -o $(GAME) $(HOBJ) $(TERMLIB)
+	@$(CC) -o $(GAME) $(HOBJ) $(TERMLIB)
 
 all:	$(GAME) lint
 	@echo "Done."
 
 makedefs:	makedefs.c alloc.o config.h
-	cc -o makedefs alloc.o makedefs.c
+	$(CC) -o makedefs alloc.o makedefs.c
 
 RUMORFILES= rumors.base rumors.kaa rumors.mrx
 

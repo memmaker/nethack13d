@@ -464,7 +464,7 @@ register int c,ct;
 
 /*VARARGS1*/
 impossible(s,x1,x2)
-register char *s;
+register char *s, *x1, *x2;
 {
 	pline(s,x1,x2);
 	pline("Program in disorder - perhaps you'd better Quit.");

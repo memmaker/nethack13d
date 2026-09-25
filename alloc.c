@@ -19,8 +19,8 @@ long dummy = ftell(stderr);
 
 #else
 
-extern char *malloc();
-extern char *realloc();
+/* extern char *malloc(); */
+/* extern char *realloc(); */
 
 long *
 alloc(lth)

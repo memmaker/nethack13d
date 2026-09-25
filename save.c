@@ -15,7 +15,6 @@ extern int something_worth_saving;
 
 extern char SAVEF[], nul[];
 extern char pl_character[PL_CSIZ];
-extern long lseek();
 extern struct obj *restobjchn();
 extern struct monst *restmonchn();
 

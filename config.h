@@ -22,7 +22,7 @@
  */
 /* #define MSDOS 	/* define for MS-DOS (actually defined by compiler) */
 #define	UNIX		/* delete if no fork(), exec() available */
-/* #define BSD		/* defind for 4.n BSD  */
+#define BSD		/* defind for 4.n BSD  */
 /* #define SYSV		/* define for System V */
 #define GNU		/* define for GNU/Linux */
 

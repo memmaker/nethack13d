@@ -7,6 +7,7 @@
    define the same constants, and the C preprocessor complains. */
 #include <stdio.h>
 #include "config.h"
+#include <signal.h>
 #ifdef BSD
 #include	<sgtty.h>
 struct ltchars ltchars, ltchars0;
@@ -34,7 +35,6 @@ setioctls() {
 
 #ifdef SUSPEND		/* implies BSD */
 dosuspend() {
-#include	<signal.h>
 #ifdef SIGTSTP
 	if(signal(SIGTSTP, SIG_IGN) == SIG_DFL) {
 		settty((char *) 0);

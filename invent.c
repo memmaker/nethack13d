@@ -1070,7 +1070,7 @@ int do_inverse;
 	char *pos = index(obj_symbols, let);
 	extern char *HI, *HE;
 	/* buffer size is len(HI) + len(HE) + max(len(names[])) + 1 */
-	static char buf[4 + 4 + 15 + 1];
+	static char buf[64];	/* vt100 HI/HE carry padding: longer than 4 */
 
 	if (pos == NULL) pos = obj_symbols;
 	Sprintf(buf, "%s%s%s", do_inverse ? HI : "",

@@ -10,3 +10,5 @@ rumors
 tty.c
 unix.c
 .hg
+save/
+*.dSYM

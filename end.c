@@ -116,7 +116,7 @@ static char buf[BUFSZ];
 boolean panicking;
 
 panic(str,a1,a2,a3,a4,a5,a6)
-char *str;
+char *str, *a1, *a2, *a3, *a4, *a5, *a6;
 {
 	if(panicking++) abort();    /* avoid loops - this should never happen*/
 				    /* was exit(1) */
