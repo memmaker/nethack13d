@@ -1,6 +1,20 @@
 # NetHack 1.3d — RVIP
 
 ## RVIP progress
+- Stage 4 done (2026-09-25). Next: stage 5 (launcher + shortcut). Tiles as Hack:
+  DawnLike default, NetHack 3.6 switchable (`HACK_TILESET=nethack`).
+  - `port/mktiles.py` (from Hack; reads monst.c, dog.c etc., objects.h incl.
+    SPELL) writes `port/tiles-dawn.png/.rgba`, `port/tiles.png/.rgba`,
+    `port/tilemap.h` (394 slots; DawnLike misses only egg; unknown
+    appearances = stable hashed pick in class). NetHack sources: `port/nethack/`.
+    Credits `port/TILES-CREDITS.txt`. Makefile: port objs depend on tilemap.h.
+  - `port/tiles.c` from Hack plus: 12 roles (`P:`), polyself (`u.usym` ->
+    `mons[u.umonnum]`), fountain, throne (typ THRONE, else `\` object), web
+    (trap WEB, else `"` amulet), `+` door only if typ DOOR/LDOOR (else
+    spellbook), traps pit/spiked/squeaky/magic/level tele/anti-magic/rust.
+  - `be_x11.c` unchanged (cell 18, nearest-neighbour); env `HACK_TILES`,
+    `HACK_CELL`, `HACK_TEXT`, `HACK_POS`. Sheets read from `port/` rel. cwd.
+  - Tested live: both sets, inventory box over map, 300 random keys alive.
 - Stage 3 done (2026-09-25). Next: stage 4 (tiles: DawnLike default + NetHack switchable, as Hack).
   - Ported from Hack's `port/rl.c`: Enter = `cmd_menu()` (parses `Commands:`
     lines of `help`, "\t<key>\t<text>") plus every `extcmdlist` entry as

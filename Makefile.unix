@@ -59,7 +59,7 @@ HOBJ = alloc.o apply.o bones.o cmd.o decl.o do.o do_name.o do_wear.o\
 
 # RVIP: X11 window (port/vt.c swaps stdin/stdout before main)
 POBJ = port/vt.o port/be_x11.o port/rl.o port/tiles.o
-port/%.o: port/%.c port/vt.h
+port/%.o: port/%.c port/vt.h port/tilemap.h
 	$(CC) -std=gnu99 -I. -I/opt/X11/include -I/opt/X11/include/freetype2 -c $< -o $@
 
 $(GAME):	specifics $(HOBJ) $(POBJ) Makefile
