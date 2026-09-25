@@ -1,6 +1,11 @@
 # NetHack 1.3d — RVIP
 
 ## RVIP progress
+- Stage 6 done (2026-09-25). Next: stage 7 (web, as Hack: C picks tiles, JS blits).
+  - Docs: `nethack13d.html` via `parse_hack()` (reads root `hh`) + GAMES entry
+    in `~/Desktop/Games/Roguelikes/Docs/build-docs.py`; guide + saving in
+    `guides.py`. Explore key `_` documented (x = spells).
+  - Sound: none (upstream has none). Web: sound stays off.
 - Stage 5 done (2026-09-25). Next: stage 6 (docs + sound).
   - `play.sh [nethack]`: HACKDIR=save/ (playground, git-ignored; `make rumors
     data` if missing), TERM=vt100, HACK_TILESET. Window 1440x430 at +0+22.
