@@ -1,6 +1,11 @@
 # NetHack 1.3d — RVIP
 
 ## RVIP progress
+- Stage 5 done (2026-09-25). Next: stage 6 (docs + sound).
+  - `play.sh [nethack]`: HACKDIR=save/ (playground, git-ignored; `make rumors
+    data` if missing), TERM=vt100, HACK_TILESET. Window 1440x430 at +0+22.
+  - Shortcut `~/Desktop/Games/Roguelikes/NetHack 1.3d.app`, icon = DawnLike
+    valkyrie (tile 81). Tested: shortcut starts the game.
 - Stage 4 done (2026-09-25). Next: stage 5 (launcher + shortcut). Tiles as Hack:
   DawnLike default, NetHack 3.6 switchable (`HACK_TILESET=nethack`).
   - `port/mktiles.py` (from Hack; reads monst.c, dog.c etc., objects.h incl.
