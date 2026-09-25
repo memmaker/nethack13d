@@ -47,8 +47,9 @@ P	wear	put on a ring
 R	remove	remove a ring
 T	remove	take off some armor
 W	wear	put on some armor
-<	up	go up the stairs
->	down	go down the stairs
+<	up	go up the stairs (walks there first)
+>	down	go down the stairs (walks there first)
+_	explore	auto-explore until something happens
 ^	trap_id identify a previously found trap
 ),[,=		ask for current weapon, armor, rings, respectively
 $	gold	count your gold

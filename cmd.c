@@ -226,7 +226,7 @@ struct ext_func_tab extcmdlist[] = {
 	(char *) 0, (char *) 0, donull
 };
 
-extern char *parse(), lowc(), unctrl(), quitchars[];
+extern char *parse(), *rl_parse(), lowc(), unctrl(), quitchars[];
 
 rhack(cmd)
 register char *cmd;
@@ -238,7 +238,7 @@ register char *cmd;
 	if(!cmd) {
 		firsttime = TRUE;
 		flags.nopick = 0;
-		cmd = parse();
+		cmd = rl_parse();	/* RVIP: port/rl.c */
 	}
 #ifdef REDO
 	if (*cmd == DOAGAIN && !in_doagain && saveq[0]) {
