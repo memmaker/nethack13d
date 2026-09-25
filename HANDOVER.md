@@ -94,3 +94,8 @@
     termcap padding `$<2>` printed literally — VT layer must strip it;
     a killed game leaves `save/<user>.0` lock.
   - Tiles (user): DawnLike default + NetHack switchable, as Hack.
+
+### Stage 8 publish (done)
+- Repo https://github.com/memmaker/nethack13d (remote `memmaker`, branch `master`), upstream bhaak @ bcec982, README.md links compare view.
+- Game redeployed via `web/deploy.sh`; card + tree link (NetHack node → nethack13d/) live on the index; card has no Info button yet.
+- Next: stage 9 shrine (`shrine/nethack13d.html`, add Info button + tree ✦).
