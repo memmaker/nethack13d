@@ -19,6 +19,6 @@ emcc -O2 $EMFLAGS -std=gnu99 -w -D_GNU_SOURCE -fcommon -Dusleep=hk_usleep \
 	-sEXPORTED_RUNTIME_METHODS=FS,IDBFS,ENV,HEAPU32,HEAP32,addRunDependency,removeRunDependency \
 	-sFORCE_FILESYSTEM -lidbfs.js -sENVIRONMENT=web
 rm -rf "$SEED"
-cp web/index.html web/nethack.js port/tiles-dawn.png port/tiles.png "$OUT/"
+cp web/index.html web/nethack.js port/tiles-dawn.png port/tiles.png "$HOME/Games/rvip-tools/web/rvip-wm.js" "$OUT/"
 python3 web/make-help.py > "$OUT/help.html"
 ls -la "$OUT"
