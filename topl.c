@@ -64,7 +64,20 @@ skipmore() {
 remember_topl() {
 register struct topl *tl;
 register int cnt = OTLMAX;
-	be_msg(toplines);
+	{	/* RVIP: a repeat of the last message becomes "message (xN)" in
+		   the page's last line instead of a new one */
+		static char prev[BUFSZ];
+		static int reps;
+		char fold[BUFSZ + 16];
+		if(prev[0] && !strcmp(toplines, prev)) {
+			(void) sprintf(fold, "%s (x%d)", prev, ++reps);
+			be_msg(fold, 1);
+		} else {
+			(void) strcpy(prev, toplines);
+			reps = 1;
+			be_msg(toplines, 0);
+		}
+	}
 	if(last_redone_topl &&
 	   !strcmp(toplines, last_redone_topl->topl_text)) return;
 	if(old_toplines &&

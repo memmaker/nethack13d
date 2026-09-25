@@ -15,7 +15,7 @@ void rl_autosave(void);
 char *rl_invtext(void);
 
 EM_JS(void, js_frame, (unsigned *scr, int *cell, int y0, int y1, int x0, int x1, int hy, int hx, int lev), { Module.hk.frame(scr, cell, y0, y1, x0, x1, hy, hx, lev); });
-EM_JS(void, be_msg, (const char *s), { Module.hk.msg(UTF8ToString(s)); });
+EM_JS(void, be_msg, (const char *s, int fold), { Module.hk.msg(UTF8ToString(s), fold); });
 EM_JS(void, js_cursor, (int y, int x), { Module.hk.cursor(y, x); });
 EM_JS(int, js_key, (void), { return Module.hk.key(); });
 EM_JS(void, js_inv, (const char *s), { Module.hk.inv(UTF8ToString(s)); });
