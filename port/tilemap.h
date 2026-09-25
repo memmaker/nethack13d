@@ -371,8 +371,6 @@ static const char *tile_key[] = {
     "T:tr",
     "T:bl",
     "T:br",
-    "T:hdoor",
-    "T:vdoor",
     "T:up",
     "T:down",
     "T:pool",

@@ -15,6 +15,8 @@
   - `be_x11.c` unchanged (cell 18, nearest-neighbour); env `HACK_TILES`,
     `HACK_CELL`, `HACK_TEXT`, `HACK_POS`. Sheets read from `port/` rel. cwd.
   - Tested live: both sets, inventory box over map, 300 random keys alive.
+  - Doorways (typ DOOR/LDOOR) draw floor: 1.3d has no open/close (`doopen`
+    commented out). Web (stage 7): C decides tiles, JS only blits (user rule).
 - Stage 3 done (2026-09-25). Next: stage 4 (tiles: DawnLike default + NetHack switchable, as Hack).
   - Ported from Hack's `port/rl.c`: Enter = `cmd_menu()` (parses `Commands:`
     lines of `help`, "\t<key>\t<text>") plus every `extcmdlist` entry as
