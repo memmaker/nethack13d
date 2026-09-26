@@ -174,7 +174,7 @@ topten(){
 #else
 #define
 #endif
-#ifdef UNIX
+#if defined(UNIX) && !defined(__EMSCRIPTEN__)	/* no hard links in the browser FS; one player per tab */
 	while(link(recfile, reclock) == -1) {
 		HUP perror(reclock);
 		if(!sleepct--) {

@@ -379,6 +379,9 @@ die:
 		getret();	/* all those pieces of coloured glass ... */
 		cls();
 	}
+#ifdef __EMSCRIPTEN__
+	{ void be_run_end(const char *); be_run_end(st1); }
+#endif
 #ifdef WIZARD
 	//if(!wizard)
 #endif

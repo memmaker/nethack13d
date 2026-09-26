@@ -101,3 +101,26 @@ int be_getkey(int wait)
 }
 
 int hk_usleep(unsigned us) { emscripten_sleep(us / 1000); return 0; }   /* -Dusleep: animations */
+
+/* Run report (roguelikes-index/server/CONTRACT.md): fire-and-forget GET,
+   never throws, offline just fails silently. Negative ints are omitted. */
+EM_JS(void, js_beacon, (const char *g, const char *ev, const char *name, const char *killer, int depth, int score, int turns, int lvl), {
+    try {
+        var p = [['g', UTF8ToString(g)], ['ev', UTF8ToString(ev)], ['name', name ? UTF8ToString(name) : ''],
+                 ['killer', killer ? UTF8ToString(killer) : ''], ['depth', depth], ['score', score], ['turns', turns], ['lvl', lvl]];
+        var q = p.filter(function (a) { return a[1] !== '' && !(a[1] < 0); })
+                 .map(function (a) { return a[0] + '=' + encodeURIComponent(a[1]); }).join('&');
+        fetch('/roguelikes/beacon?' + q, { keepalive: true, mode: 'no-cors' }).catch(function () {});
+    } catch (e) {}
+});
+extern char plname[];
+/* end.c done(), right before topten(): u.urexp is the final score */
+void be_run_end(const char *st1)
+{
+    const char *ev = *st1 == 'q' ? "quit" : *st1 == 'e' ? (u.uevent.ascended ? "win" : "quit") : "death";
+    const char *k = *ev == 'd' ? killer : 0;
+    if (k && !strncmp(k, "a ", 2)) k += 2;
+    else if (k && !strncmp(k, "an ", 3)) k += 3;
+    else if (k && !strncmp(k, "the ", 4)) k += 4;
+    js_beacon("nethack13d", ev, plname, k, dlevel, (int)u.urexp, (int)moves, u.ulevel);
+}
