@@ -104,3 +104,8 @@
 - https://ruzzoli.de/roguelikes/shrine/nethack13d.html live; card Info, tree ✦, game title link checked (200).
 - Only one screenshot (steps): `shot.js` doesn't capture text windows/pop-ups, and level 1 stairs weren't found for a fight shot. Add title/fight/inventory shots later.
 - No walkthrough for 1.3d found; manual = nethack.6 + help copied.
+- Prompt line (RVIP step 5 / W4, 2026-09-26): the live message row is shown in a
+  box over the map by `RvipWM.prompt` (rvip-wm.js). A key hides it only while
+  the game waits for a command, so a question stays up until answered.
+  Here: `js_key(rl_at_prompt)` in `port/be_web.c`; `web/nethack.js` sends screen
+  row 0 (`rowText(0)`) from `draw()`.
