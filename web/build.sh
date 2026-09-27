@@ -19,7 +19,7 @@ emcc -O2 $EMFLAGS -std=gnu99 -w -D_GNU_SOURCE -fcommon -Dusleep=hk_usleep \
 	-sEXPORTED_RUNTIME_METHODS=FS,IDBFS,ENV,HEAPU32,HEAP32,addRunDependency,removeRunDependency \
 	-sFORCE_FILESYSTEM -lidbfs.js -sENVIRONMENT=web
 rm -rf "$SEED"
-cp web/index.html web/nethack.js port/tiles-dawn.png port/tiles.png "$OUT/"
+cp web/index.html web/nethack.js port/tiles-dawn.png port/tiles-dawn-1.png port/tiles.png "$OUT/"
 # fonts for the Font choosers: the index page's fonts/ (loaded from ../fonts/<name>.woff)
 FONTS=${FONTS:-$HOME/Games/roguelikes-index/fonts}
 (ls "$FONTS"/*.woff 2>/dev/null | sed 's|.*/||; s/\.woff$//') | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read().split()))' > "$OUT/fonts.json"
