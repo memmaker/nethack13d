@@ -46,7 +46,8 @@ Commands:
 	S	Save the game.
 	!	Escape to a shell.
 	^Z	Suspend the game.
-	<	up: go up the staircase (walks to it first if it is known).
+	<	up: go up the staircase (if it is known and you are elsewhere,
+		walk to it; press < again there to climb).
 	>	down: go down (just like up).
 	_	explore: walk to the nearest unexplored spot until something
 		happens (a message, a monster, a key).
