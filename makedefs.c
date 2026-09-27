@@ -5,6 +5,7 @@ static	char	SCCS_Id[] = "@(#)makedefs.c	1.3\t87/07/14";
 
 #include	"config.h"
 #include	<stdio.h>
+#include	<stdarg.h>
 
 #ifdef MSDOS
 #undef	exit
