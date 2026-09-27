@@ -12,17 +12,20 @@
 	var KEEP = { 'web-layout.json': 1, help: 1, hh: 1, data: 1, rumors: 1, news: 1, perm: 1, record: 1, save: 1 };
 	var FONT = '"DejaVu Sans Mono", Menlo, Consolas, "Liberation Mono", monospace';
 	var FG = '#d7d7d7', A_STANDOUT = 0x10000, MAP0 = 1, MAP1 = 22;
-	var SETS = { dawn: ['tiles-dawn.png', 'DawnLike'], nethack: ['tiles.png', 'NetHack'] };
+	/* tile sets (same slots, port/mktiles.py); None = text: cells fall back to the screen's characters */
+	/* DawnLike|a: animated, every 500 ms the map draws from the frame-1 sheet (port/mktiles.py) and back */
+	var SETS = { dawn: ['tiles-dawn.png', 'DawnLike'], dawna: ['tiles-dawn.png', 'DawnLike|a', 'tiles-dawn-1.png'],
+		nethack: ['tiles.png', 'NetHack'], none: [null, 'None'] }, ORDER = ['dawn', 'dawna', 'nethack', 'none'];
 	/* arrows: 0x101.. (be_web.c makes them hjkl, or cursor keys in menus) */
 	var KEYS = { ArrowUp: 0x101, ArrowDown: 0x102, ArrowLeft: 0x103, ArrowRight: 0x104, Home: 121, PageUp: 117,
 		End: 98, PageDown: 110, Clear: 46, Enter: 10, Escape: 27, Backspace: 8, Delete: 8, Tab: 9 };
 
 	var events = [], running = false, lastSave = 0;
 	var wantSaveFlag = true;   /* restoring deletes the save: write it back at the first prompt */
-	var scr = null, cells = null, box = [99, -1, 99, -1], cur = { y: 0, x: 0 };
+	var rowFg = [], scr = null, cells = null, box = [99, -1, 99, -1], cur = { y: 0, x: 0 };
 	var cv, ctx, cell = 18, auto = true;
 	var dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
-	var set = 'dawn', sheets = {};
+	var set = 'dawn', sheets = {}, tilesReady = false, atCmd = false;
 
 	function $(id) { return document.getElementById(id); }
 	function status(msg, isError) {
@@ -36,7 +39,7 @@
 	 * window, scrolled to keep the hero in view; row 0 plus the message
 	 * history in Messages, row 23 in Status, text over the map in a pop-up. */
 	var ROWS = MAP1 - MAP0 + 1, GUT = 6, TITLE = 22, log = [], hero = { y: 0, x: 0, lev: -1 }, off = { x: 0, y: 0 };
-	var L = { cell: 0, fs: {}, wm: null }, LAYOUT = DIR + '/web-layout.json', wm = null;
+	var L = { cell: 0, fs: {}, wm: null, face: '', mapFace: '' }, LAYOUT = DIR + '/web-layout.json', wm = null;
 	function esc(t) { return t.replace(/[&<>]/g, function (c) { return '&' + (c === '&' ? 'amp' : c === '<' ? 'lt' : 'gt') + ';'; }); }
 	/* screen row y, columns x0..x1 as HTML (standout, cursor) */
 	function rowHtml(y, x0, x1, cursor) {
@@ -63,50 +66,89 @@
 		for (var c = 8; c <= 64; c++) if (80 * c <= b.clientWidth && ROWS * c <= b.clientHeight) best = c;
 		return best;
 	}
+	function face(map) { var n = map ? L.mapFace : L.face; return n ? '"' + n + '", ' + FONT : FONT; }
 	function glyph(c, px, py, w, h, size) {
 		ctx.fillStyle = '#000'; ctx.fillRect(px, py, w, h);
 		if (c <= 32) return;
-		ctx.font = 'bold ' + size + 'px ' + FONT;
+		ctx.font = (L.mapFace ? '' : 'bold ') + size + 'px ' + face(true);   /* bitmap fonts: not bold */
 		ctx.fillStyle = FG;
 		ctx.fillText(String.fromCharCode(c), px + w / 2, py + h / 2 + 1);
 	}
-	function tile(t, px, py) {
-		var img = sheets[set];
-		if (img && img.complete) ctx.drawImage(img, (t % 32) * 16, (t >> 5) * 16, 16, 16, px, py, cell, cell);
+	function tile(t, px, py) {   /* sheets: by file name */
+		var f1 = frame && anim && sheets[SETS[set][2]], img = f1 && f1.naturalWidth ? f1 : sheets[SETS[set][0]];
+		if (tilesReady && img && img.complete) ctx.drawImage(img, (t % 32) * 16, (t >> 5) * 16, 16, 16, px, py, cell, cell);
 	}
 	function draw() {
 		if (!scr) return;
 		var y, x, k, py, lines = [];
 		ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 80 * cell, ROWS * cell);
 		for (y = MAP0; y <= MAP1; y++)
-			for (x = 0; x < 80; x++) {
-				k = cells[y * 80 + x]; py = (y - MAP0) * cell;
-				if (k > 0) {
-					var t = k >> 12, u = (k & 0xfff) - 1;
-					if (u >= 0) tile(u, x * cell, py);
-					tile(t, x * cell, py);
-				} else if (k < 0) glyph(-2 - k, x * cell, py, cell, cell, Math.round(cell * 0.78));
-			}
+			for (x = 0; x < 80; x++) drawCell(y, x);
 		var pop = $('pop'), inbox = box[1] >= 0 && cur.y >= box[0] && cur.y <= box[1];
 		if (box[1] >= 0) {
-			for (y = box[0]; y <= box[1]; y++) lines.push(rowHtml(y, box[2], box[3], inbox));
+			for (y = box[0]; y <= box[1]; y++) {   /* row colours: the game's (its inventory menu) */
+				var h = rowHtml(y, box[2], box[3], inbox);
+				lines.push(rowFg[y] ? '<span style="color:' + rowFg[y] + '">' + h + '</span>' : h);
+			}
 			pop.innerHTML = lines.join('\n');
 			pop.hidden = false;
 			RvipWM.popup(pop, { x: box[2] * cell + Math.min(0, -off.x) });
 		} else pop.hidden = true;
-		if (cur.y >= MAP0 && cur.y <= MAP1 && !inbox) {
-			ctx.strokeStyle = FG; ctx.lineWidth = 1;
-			ctx.strokeRect(cur.x * cell + 0.5, (cur.y - MAP0) * cell + 0.5, cell - 1, cell - 1);
-		}
+		drawCursor();
 		/* messages: history (dim), then the live top line with the cursor */
-		var ml = $('msg'), body = ml.parentNode, atEnd = body.scrollTop + body.clientHeight >= body.scrollHeight - 4;
+		/* history fills from the top; the newest message always stays in view */
+		var ml = $('msg'), body = ml.parentNode;
 		ml.innerHTML = log.map(function (t) { return '<span class="old">' + esc(t) + '</span>'; }).join('\n') +
 			(log.length ? '\n' : '') + rowHtml(0, 0, 79, true);
-		if (atEnd) body.scrollTop = body.scrollHeight;
+		body.scrollTop = body.scrollHeight;
 		$('stat').innerHTML = rowHtml(23, 0, 79, true);
 		RvipWM.prompt.text(rowText(0));      /* the prompt line over the map */
 		scrollMap(false);
 	}
+	function drawCell(y, x) {
+		var k = cells[y * 80 + x], py = (y - MAP0) * cell;
+		if (k > 0 && !tilesReady) glyph(scr[y * 80 + x] & 255, x * cell, py, cell, cell, Math.round(cell * 0.78));
+		else if (k > 0) {
+			var t = k >> 12, u = (k & 0xfff) - 1;
+			ctx.fillStyle = '#000'; ctx.fillRect(x * cell, py, cell, cell);
+			if (u >= 0) tile(u, x * cell, py);
+			tile(t, x * cell, py);
+		} else if (k < 0) glyph(-2 - k, x * cell, py, cell, cell, Math.round(cell * 0.78));
+	}
+	function drawCursor() {
+		var inbox = box[1] >= 0 && cur.y >= box[0] && cur.y <= box[1];
+		if (cur.y >= MAP0 && cur.y <= MAP1 && !inbox && !(cur.y === hero.y && cur.x === hero.x)) {   /* not on the hero */
+			ctx.strokeStyle = FG; ctx.lineWidth = 1;
+			ctx.strokeRect(cur.x * cell + 0.5, (cur.y - MAP0) * cell + 0.5, cell - 1, cell - 1);
+		}
+	}
+	/* animation: anim[slot] = the two sheets differ there (found once); every
+	 * 500 ms only cells whose sprite or floor is animated are redrawn */
+	var frame = 0, anim = null;
+	function findAnim() {
+		var a = sheets[SETS.dawna[0]], b = sheets[SETS.dawna[2]];
+		if (!a || !b || !a.naturalWidth || !b.naturalWidth) return;
+		var W = a.naturalWidth, H = a.naturalHeight, c = document.createElement('canvas'), g;
+		c.width = W; c.height = H; g = c.getContext('2d');
+		g.drawImage(a, 0, 0); var da = g.getImageData(0, 0, W, H).data;
+		g.clearRect(0, 0, W, H); g.drawImage(b, 0, 0); var db = g.getImageData(0, 0, W, H).data;
+		var n = (W / 16) * (H / 16);
+		anim = new Uint8Array(n);
+		for (var s = 0; s < n; s++)
+			for (var y = 0, x0 = (s % (W / 16)) * 16, y0 = ((s / (W / 16)) | 0) * 16; y < 16 && !anim[s]; y++)
+				for (var i = ((y0 + y) * W + x0) * 4, e = i + 64; i < e; i++) if (da[i] !== db[i]) { anim[s] = 1; break; }
+	}
+	setInterval(function () {
+		if (!cells || set !== 'dawna' || !tilesReady || document.hidden) return;
+		if (!anim) findAnim();
+		if (!anim) return;
+		frame ^= 1;
+		for (var i = MAP0 * 80; i < (MAP1 + 1) * 80; i++) {
+			var k = cells[i];
+			if (k > 0 && (anim[k >> 12] || anim[(k & 0xfff) - 1])) drawCell((i / 80) | 0, i % 80);
+		}
+		drawCursor();
+	}, 500);
 	/* keep the hero in the middle half of the map window; recentre when it leaves it */
 	function scrollMap() {
 		off = RvipWM.center(cv, (hero.x + 0.5) * cell, (hero.y - MAP0 + 0.5) * cell, 80 * cell, ROWS * cell);
@@ -117,12 +159,14 @@
 	}
 	function fs(id) { return L.fs[id] || 13; }
 	function fonts() {
-		['msg', 'stat', 'inv', 'vis'].forEach(function (id) { $(id).style.fontSize = fs(id) + 'px'; });
-		$('pop').style.fontSize = fs('msg') + 'px';   /* pop-up text = the message font */
+		['msg', 'stat', 'inv', 'pop'].forEach(function (id) { $(id).style.fontSize = fs(id === 'pop' ? 'msg' : id) + 'px'; $(id).style.fontFamily = face(false); });
+		$('vis').style.fontSize = fs('vis') + 'px'; $('vis').style.fontFamily = L.face ? face(false) : '';
+		if (hk.lastInv) { var t = hk.lastInv; hk.lastInv = null; hk.inv(t); }   /* icon size follows the font */
 	}
 	/* windows: the shared tiling window manager (rvip-wm.js, RVIP.md 5b) */
 	function makeWM() {
-		try { var s = JSON.parse(Module.FS.readFile(LAYOUT, { encoding: 'utf8' })); if (s) L = { cell: s.cell | 0, fs: s.fs || { msg: s.font, stat: s.font, inv: s.font, vis: s.vis }, wm: s.wm }; } catch (e) { }
+		try { var s = JSON.parse(Module.FS.readFile(LAYOUT, { encoding: 'utf8' })); if (s) L = { cell: s.cell | 0, fs: s.fs || { msg: s.font, stat: s.font, inv: s.font, vis: s.vis }, wm: s.wm, face: s.face || '', mapFace: s.mapFace || '' }; } catch (e) { }
+		loadFace(L.face); loadFace(L.mapFace);
 		if (L.cell >= 8 && L.cell <= 64) { cell = L.cell; auto = false; }
 		var H = $('game').clientHeight || 600, line = Math.ceil(fs('msg') * 1.4) + 6;
 		wm = RvipWM({
@@ -130,16 +174,18 @@
 			wins: [{ id: 'map', title: 'Map' }, { id: 'msg', title: 'Messages' }, { id: 'stat', title: 'Status' }, { id: 'inv', title: 'Inventory' }, { id: 'vis', title: 'Visible' }],
 			multi: { d: 'v', r: 0.7, a: 'map', b: { d: 'h', r: 0.4, a: { d: 'v', r: 0.7, a: 'msg', b: 'stat' }, b: { d: 'h', r: 0.5, a: 'inv', b: 'vis' } } },
 			single: { d: 'v', r: line / H, a: 'msg', b: { d: 'v', r: 1 - line / (H - line), a: 'map', b: 'stat' } },
-			state: L.wm, noFont: 'map',
+			state: L.wm,
 			save: function (st) { L.wm = st; saveLayout(); },
 			layout: function (r) { rects = r; fonts(); if (auto) { cell = fit(); measure(); } scrollMap(true); draw(); },
-			font: function (id, d) {
+			font: function (id, d) {   /* A−/A+ on the Map title bar zoom the map */
+				if (id === 'map') return zoom(2 * d);
 				L.fs[id] = Math.max(8, Math.min(28, fs(id) + d));   /* each window its own size */
 				fonts(); saveLayout();
 			},
 			onReset: function () { auto = true; L.cell = 0; L.fs = {}; L.wm = wm.state(); fonts(); cell = fit(); measure(); scrollMap(true); draw(); saveLayout(); }
 		});
 		wm.apply();
+		renderMapSel();
 	}
 	function zoom(d) {
 		auto = false;
@@ -151,12 +197,61 @@
 		set = SETS[s] ? s : 'dawn';
 		store('nh13d-tileset', set);
 		$('btn-tiles').textContent = 'Tiles: ' + SETS[set][1];
-		if (!sheets[set]) { sheets[set] = new Image(); sheets[set].onload = draw; sheets[set].src = SETS[set][0]; }
+		renderMapSel();
+		tilesReady = false;
+		if (!SETS[set][0]) { redrawLists(); return; }   /* text mode */
+		var mine = set, img = sheets[SETS[set][0]];
+		frame = 0;
+		/* a sheet that loads late must not turn tiles back on after None (or another set) was picked */
+		var done = function () { if (set === mine) { tilesReady = true; redrawLists(); } };
+		if (!img) { img = sheets[SETS[set][0]] = new Image(); img.onload = done; img.src = SETS[set][0]; }
+		else if (img.complete) done();
+		else img.onload = done;
+		if (SETS[set][2] && !sheets[SETS[set][2]]) { sheets[SETS[set][2]] = new Image(); sheets[SETS[set][2]].src = SETS[set][2]; }
+	}
+	/* after a tile-set switch: map, Visible (from its cached string), Inventory (^R, at the command prompt) */
+	function redrawLists() {
 		draw();
+		var vb = $('vis');
+		if (vb._vis != null) { var s = vb._vis; vb._vis = null; hk.vis(s); }
+		if (hk.lastInv) { var t = hk.lastInv; hk.lastInv = null; hk.inv(t); }   /* the other sheet */
+		if (atCmd && running) events.push(18);   /* ^R: the game resends it with or without icons */
+	}
+	/* Visible / Inventory icon: the tile as a 16px CSS sprite */
+	function sprite(t, s) {   /* s: side in px (default 16) */
+		s = s || 16;
+		var img = sheets[SETS[set][0]], h = img && img.naturalHeight ? img.naturalHeight * s / 16 : 'auto';
+		return 'image-rendering:pixelated;background:url(' + SETS[set][0] + ') -' + (t % 32) * s + 'px -' + (t >> 5) * s + 'px / ' +
+			32 * s + 'px ' + (h === 'auto' ? h : h + 'px') + ';width:' + s + 'px;height:' + s + 'px';
+	}
+	function visIcon(t) {
+		if (!tilesReady || !(t >= 0)) return null;
+		var i = document.createElement('i');
+		i.className = 'wm-ic'; i.style.cssText = sprite(t);
+		return i;
+	}
+	/* map font chooser on the Map title bar (shown on hover), text mode only */
+	var mapSel = document.createElement('select');
+	mapSel.className = 'mapsel'; mapSel.title = 'Map font (text mode)';
+	mapSel.innerHTML = '<option value="">Default font</option>';
+	mapSel.addEventListener('pointerdown', function (e) { e.stopPropagation(); });   /* not a window drag */
+	function renderMapSel() {
+		var bs = document.querySelector('#t-map .wm-btns');
+		if (bs && mapSel.parentNode !== bs) bs.insertBefore(mapSel, bs.firstChild);
+		mapSel.hidden = !!SETS[set][0];
+		mapSel.value = L.mapFace || '';
+	}
+	/* a face from the index page's fonts/ (web/build.sh lists them in fonts.json) */
+	function loadFace(n, now) {
+		var redraw = function () { fonts(); draw(); };
+		if (!n) { if (now) redraw(); return; }
+		var ff = new FontFace(n, 'url(../fonts/' + n + '.woff)');
+		ff.load().then(function () { document.fonts.add(ff); redraw(); }).catch(function () { status('Could not load the font ' + n + '.', true); });
 	}
 
 	var hk = {
-		frame: function (sp, cp, y0, y1, x0, x1, hy, hx, lev) {
+		frame: function (sp, cp, y0, y1, x0, x1, hy, hx, lev, fg) {
+			rowFg = fg.split('\n');
 			scr = Module.HEAPU32.slice(sp >> 2, (sp >> 2) + 1920);
 			cells = Module.HEAP32.slice(cp >> 2, (cp >> 2) + 1920);
 			box = [y0, y1, x0, x1];
@@ -169,17 +264,21 @@
 			if (moved || lv) scrollMap(lv);
 			draw();
 		},
-		/* inventory lines "<colour>\t<text>", coloured by the game */
+		/* inventory lines "<colour>\t<tile>\t<row>", all decided by the game: with
+		 * icons the row is "a)   name" and the tile goes on columns 2-4 */
 		inv: function (t) {
 			if (t === hk.lastInv) return;
 			hk.lastInv = t;
 			$('inv').innerHTML = t.split('\n').map(function (l) {
-				var i = l.indexOf('\t'), c = l.slice(0, i);
-				l = l.slice(i + 1);
-				return c ? '<span style="color:' + c + '">' + esc(l) + '</span>' : esc(l);
+				var f = l.split('\t'), c = f[0], ic = +f[1], r = f.slice(2).join('\t'), h;
+				/* square icon, side min(2 cells, 1 line), whatever the font's cell shape */
+				var fz = fs('inv'), side = Math.round(Math.min(2 * 0.6 * fz, 1.4 * fz));
+				h = ic >= 0 && tilesReady ? esc(r.slice(0, 2)) + '<span class="ic"><i style="' + sprite(ic, side) + '"></i></span>' + esc(r.slice(5)) : esc(r);
+				return c ? '<span style="color:' + c + '">' + h + '</span>' : h;
 			}).join('\n');
 		},
-		vis: function (s) { RvipWM.visible($('vis'), s); },
+		icons: function () { return tilesReady ? 1 : 0; },
+		vis: function (s) { RvipWM.visible($('vis'), s, visIcon); },
 		/* fold: the game folded a repeat into "message (xN)", replacing the last line */
 		msg: function (t, fold) {
 			t = t.replace(/\s*\n\s*/g, ' ').trim();
@@ -188,7 +287,7 @@
 			else { log.push(t); if (log.length > 200) log.shift(); }
 		},
 		cursor: function (y, x) { cur.y = y; cur.x = x; draw(); },
-		key: function (atCmd) { RvipWM.prompt.wait(atCmd); return events.length ? events.shift() : -1; },
+		key: function (a) { atCmd = !!a; RvipWM.prompt.wait(a); return events.length ? events.shift() : -1; },
 		/* autosave at most every 2 s, and when the page is hidden */
 		wantSave: function () {
 			var now = performance.now();
@@ -357,15 +456,23 @@
 		cv = document.querySelector('#game canvas');
 		ctx = cv.getContext('2d');
 		setTiles(store('nh13d-tileset'));
-		$('btn-tiles').onclick = function () { setTiles(set === 'dawn' ? 'nethack' : 'dawn'); };
+		$('btn-tiles').onclick = function () { setTiles(ORDER[(ORDER.indexOf(set) + 1) % ORDER.length]); };
+		RvipWM.dropdown($('btn-file'), $('menu-file'));
+		fetch('fonts.json').then(function (r) { return r.json(); }).then(function (list) {
+			[[$('sel-font'), 'face'], [mapSel, 'mapFace']].forEach(function (a) {
+				list.forEach(function (n) { var o = document.createElement('option'); o.value = n; o.textContent = n.replace(/^Web(Plus|437)_/, '').replace(/_/g, ' '); a[0].appendChild(o); });
+				a[0].value = L[a[1]] || '';
+			});
+		}).catch(function () { });
+		[[$('sel-font'), 'face'], [mapSel, 'mapFace']].forEach(function (a) {
+			a[0].onchange = function () { L[a[1]] = this.value; saveLayout(); loadFace(this.value, true); this.blur(); };
+		});
 		$('btn-export').onclick = exportSave;
 		$('btn-import').onclick = function () { $('import-file').click(); };
 		$('import-file').onchange = function () { if (this.files[0]) importSave(this.files[0]); this.value = ''; };
 		$('btn-new').onclick = newGame;
 		$('btn-help').onclick = toggleHelp;
 		$('help-close').onclick = toggleHelp;
-		$('btn-zoom-in').onclick = function () { zoom(2); };
-		$('btn-zoom-out').onclick = function () { zoom(-2); };
 		$('btn-restart').onclick = function () { location.reload(); };
 		document.querySelectorAll('button').forEach(function (b) {
 			b.addEventListener('mousedown', function (e) { e.preventDefault(); });

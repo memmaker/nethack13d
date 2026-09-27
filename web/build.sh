@@ -5,8 +5,8 @@ set -e
 cd "$(dirname "$0")/.."
 OUT=web/dist SEED=web/seed
 rm -rf "$OUT" "$SEED" && mkdir -p "$OUT" "$SEED"
-[ -f save/data ] || make rumors data
-cp save/help save/hh save/data save/rumors "$SEED/"
+make -s rumors data onames.h date.h # makedefs writes them here (save/ is a local playground)
+cp help hh data rumors "$SEED/"
 SRCS=$(sed -n '/^HACKCSRC/,/[^\\]$/p' Makefile.unix | tr -d '\\' | sed 's/HACKCSRC =//' | sed 's/main\.c/unixmain.c/; s/tty\.c/unixtty.c/; s/unix\.c/unixunix.c/')
 emcc -O2 $EMFLAGS -std=gnu99 -w -D_GNU_SOURCE -fcommon -Dusleep=hk_usleep \
 	-Wno-incompatible-function-pointer-types -Wno-return-mismatch -Wno-implicit-function-declaration -Wno-implicit-int -Wno-incompatible-pointer-types \
@@ -19,6 +19,9 @@ emcc -O2 $EMFLAGS -std=gnu99 -w -D_GNU_SOURCE -fcommon -Dusleep=hk_usleep \
 	-sEXPORTED_RUNTIME_METHODS=FS,IDBFS,ENV,HEAPU32,HEAP32,addRunDependency,removeRunDependency \
 	-sFORCE_FILESYSTEM -lidbfs.js -sENVIRONMENT=web
 rm -rf "$SEED"
-cp web/index.html web/nethack.js port/tiles-dawn.png port/tiles.png "$OUT/"
+cp web/index.html web/nethack.js port/tiles-dawn.png port/tiles-dawn-1.png port/tiles.png "$OUT/"
+# fonts for the Font choosers: the index page's fonts/ (loaded from ../fonts/<name>.woff)
+FONTS=${FONTS:-$HOME/Games/roguelikes-index/fonts}
+(ls "$FONTS"/*.woff 2>/dev/null | sed 's|.*/||; s/\.woff$//') | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read().split()))' > "$OUT/fonts.json"
 python3 web/make-help.py > "$OUT/help.html"
 ls -la "$OUT"

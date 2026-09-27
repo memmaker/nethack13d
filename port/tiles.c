@@ -46,22 +46,46 @@ static int expect(int x, int y)
     return r->scrsym ? r->scrsym : ' ';
 }
 
-static int under(int x, int y)
+/* Floor autotiles (DawnLike): the floor kind of the real level, never the
+   player's view (or the rim would follow the lit area): 1 room (stairs,
+   fountain, throne too), 2 corridor, 3 doorway (same kind as either);
+   secret doors and corridors count as wall/rock. */
+static int fkind(int x, int y)
 {
+    if (x < 1 || x >= COLNO || y < 0 || y >= ROWNO) return 0;
     switch (levl[x][y].typ) {
-    case CORR: return T(corr);
+    case ROOM: case STAIRS: case FOUNTAIN: case THRONE: return 1;
+    case CORR: return 2;
+    case DOOR: case LDOOR: return 3;
     }
-    return T(floor);
+    return 0;
 }
+/* slot base+mask: a border on each side (n=8 s=4 w=2 e=1) whose neighbour isn't this floor */
+static int autotile(int x, int y)
+{
+    static int fb = -2, cb = -2;
+    static const int dx[4] = { 0, 0, -1, 1 }, dy[4] = { -1, 1, 0, 0 };
+    int k = fkind(x, y), m = 0, i;
+    if (fb == -2) fb = slot("T:floors/0"), cb = slot("T:corrs/0");
+    if (k == 3) k = 1;              /* a doorway shows room floor */
+    for (i = 0; i < 4; i++) {
+        int n = fkind(x + dx[i], y + dy[i]);
+        if (n != k && n != 3) m |= 8 >> i;
+    }
+    if (k == 2) return cb >= 0 ? cb + m : T(corr);
+    return fb >= 0 ? fb + m : T(floor);
+}
+
+static int under(int x, int y) { return autotile(x, y); }
 
 static int terrain(int x, int y, int ch)
 {
     struct trap *t;
     switch (ch) {
-    case '.': return T(floor);
-    case CORR_SYM: return T(corr);
+    case '.': return autotile(x, y);
+    case CORR_SYM: return autotile(x, y);
     case '|': return T(vwall);
-    case '+': return levl[x][y].typ == DOOR || levl[x][y].typ == LDOOR ? T(floor) : -1;   /* doorways, no real doors in 1.3d; else a spellbook */
+    case '+': return levl[x][y].typ == DOOR || levl[x][y].typ == LDOOR ? autotile(x, y) : -1;   /* doorways, no real doors in 1.3d; else a spellbook */
     case FOUNTAIN_SYM: return T(fountain);
     case THRONE_SYM: return levl[x][y].typ == THRONE ? T(throne) : -1;
     case '<': return T(up);
@@ -135,6 +159,16 @@ int tile_for(int sy, int sx, int ch, int *un)
     *un = -1;
     return -1;
 }
+
+/* Tile of a monster / an object, for the web Inventory and Visible icons */
+int tile_mon(struct monst *m) { return keyed("M:", m->data->mname); }
+int tile_obj(struct obj *o)
+{
+    char s[2] = { o->olet, 0 };
+    int t = obj_tile(o);
+    return t >= 0 ? t : keyed("C:", s);
+}
+int tile_gold(void) { return T(gold); }
 
 int vt_cooked(void) { return !flags.cbreak; }
 

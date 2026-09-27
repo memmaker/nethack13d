@@ -91,7 +91,7 @@ peffects(otmp)
 		unkn++;
 		if(index("VWZ&",u.usym)) {
 			pline("This burns like acid!");
-			losehp(d(2,6)); /* will never kill you */
+			losehp(d(2,6), "potion of holy water"); /* will never kill you */
 		} else {
 			pline("You feel full of awe.");
 			if (Sick) Sick=0;
