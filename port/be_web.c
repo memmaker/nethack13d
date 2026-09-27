@@ -12,10 +12,11 @@
 extern int rl_at_prompt, rl_saved;
 extern char SAVEF[];
 void rl_autosave(void);
-char *rl_invtext(void);
+char *rl_invtext(int icons);
 const char *rl_css(int olet);
 
-EM_JS(void, js_frame, (unsigned *scr, int *cell, int y0, int y1, int x0, int x1, int hy, int hx, int lev), { Module.hk.frame(scr, cell, y0, y1, x0, x1, hy, hx, lev); });
+EM_JS(void, js_frame, (unsigned *scr, int *cell, int y0, int y1, int x0, int x1, int hy, int hx, int lev, const char *fg), { Module.hk.frame(scr, cell, y0, y1, x0, x1, hy, hx, lev, UTF8ToString(fg)); });
+EM_JS(int, be_icons, (void), { return Module.hk.icons(); });   /* a tile set is on: lists show icons */
 EM_JS(void, be_msg, (const char *s, int fold), { Module.hk.msg(UTF8ToString(s), fold); });
 EM_JS(void, js_cursor, (int y, int x), { Module.hk.cursor(y, x); });
 EM_JS(void, js_vis, (const char *s), { Module.hk.vis(UTF8ToString(s)); });
@@ -41,9 +42,13 @@ static void cell(int y, int x, int tile, int und, int ch)
 void be_init(int c, int r) { atexit(at_exit); }
 void be_frame(chtype s[][80])
 {
-    int b[4];
+    int b[4], n = 0;
+    char fg[24 * 24];
     vt_map(s, b, cell);
-    js_frame(&s[0][0], &cells[0][0], b[0], b[1], b[2], b[3], u.uy + MAP0, u.ux, dlevel);
+    for (int y = 0; y < 24; y++)    /* per-row colours of the game's pop-up menu */
+        n += snprintf(fg + n, sizeof fg - n, "%s\n", vt_rowfg[y] ? vt_rowfg[y] : "");
+    /* hero's screen cell: map x is screen column x - 1 (tiles.c) */
+    js_frame(&s[0][0], &cells[0][0], b[0], b[1], b[2], b[3], u.uy + MAP0, u.ux - 1, dlevel, fg);
 }
 void be_cursor(int y, int x) { js_cursor(y, x); }
 void be_flush(void) { }
@@ -53,9 +58,10 @@ void be_end(void) { }
 int be_getkey(int wait)
 {
     int k;
-    static char inv[52 * 80];
-    if (rl_at_prompt && strcmp(inv, rl_invtext())) js_inv(strcpy(inv, rl_invtext()));
-    if (rl_at_prompt) {   /* Visible window: "M<glyph><name>" / "I<glyph><name>\t<colour>" (rvip-wm.js) */
+    static char inv[52 * 100];
+    int icons = rl_at_prompt && be_icons();
+    if (rl_at_prompt && strcmp(inv, rl_invtext(icons))) js_inv(strcpy(inv, rl_invtext(icons)));
+    if (rl_at_prompt) {   /* Visible window: "M<glyph><name>\t<colour>\t<tile>" / "I..." (rvip-wm.js) */
         static char vis[8192];
         char *p = vis, *e = vis + sizeof vis - 100;
         struct monst *m;
@@ -63,11 +69,11 @@ int be_getkey(int wait)
         struct gold *g;
         *p = 0;
         for (m = fmon; m && p < e; m = m->nmon)
-            if (!m->mimic && canseemon(m)) p += sprintf(p, "M%c%.60s\n", m->data->mlet, m->data->mname);
+            if (!m->mimic && canseemon(m)) p += sprintf(p, "M%c%.60s\t\t%d\n", m->data->mlet, m->data->mname, tile_mon(m));
         for (o = fobj; o && p < e; o = o->nobj)
-            if (cansee(o->ox, o->oy)) p += sprintf(p, "I%c%.80s\t%s\n", o->olet, doname(o), rl_css(o->olet));
+            if (cansee(o->ox, o->oy)) p += sprintf(p, "I%c%.80s\t%s\t%d\n", o->olet, doname(o), rl_css(o->olet), tile_obj(o));
         for (g = fgold; g && p < e; g = g->ngold)
-            if (cansee(g->gx, g->gy)) p += sprintf(p, "I$%ld gold pieces\t#ffe040\n", (long)g->amount);
+            if (cansee(g->gx, g->gy)) p += sprintf(p, "I$%ld gold pieces\t#ffe040\t%d\n", (long)g->amount, tile_gold());
         js_vis(vis);
     }
     for (;;) {

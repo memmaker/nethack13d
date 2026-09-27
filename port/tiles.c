@@ -136,6 +136,16 @@ int tile_for(int sy, int sx, int ch, int *un)
     return -1;
 }
 
+/* Tile of a monster / an object, for the web Inventory and Visible icons */
+int tile_mon(struct monst *m) { return keyed("M:", m->data->mname); }
+int tile_obj(struct obj *o)
+{
+    char s[2] = { o->olet, 0 };
+    int t = obj_tile(o);
+    return t >= 0 ? t : keyed("C:", s);
+}
+int tile_gold(void) { return T(gold); }
+
 int vt_cooked(void) { return !flags.cbreak; }
 
 /* The character the game shows at screen cell (sy, sx), ' ' outside the map. */

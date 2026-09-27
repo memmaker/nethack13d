@@ -87,6 +87,8 @@ void vt_push(const char *k) { strncat(queue, k, sizeof queue - strlen(queue) - 1
  * Up/down/8/2 move, any other key returns the cursor index and leaves
  * the key in vt_menukey. */
 int vt_menukey;
+const char **vt_menu_fg;
+const char *vt_rowfg[ROWS];
 int vt_menu(const char **item, int n, int cur)
 {
     int w = 0, h = n < ROWS - 2 ? n : ROWS - 2, top = 0, y0, x0, k;
@@ -110,6 +112,7 @@ int vt_menu(const char **item, int n, int cur)
             }
         if (top) scr[y0][x0 + w + 2] = '^';
         if (top + h < n) scr[y0 + h + 1][x0 + w + 2] = 'v';
+        for (int y = 1; y <= h; y++) vt_rowfg[y0 + y] = vt_menu_fg ? vt_menu_fg[top + y - 1] : 0;
         present();
         be_cursor(y0 + 1 + cur - top, x0 + 1);
         be_flush();
@@ -119,6 +122,7 @@ int vt_menu(const char **item, int n, int cur)
         else break;
     }
     be_menu = 0;
+    memset(vt_rowfg, 0, sizeof vt_rowfg);
     memcpy(scr, save, sizeof scr);
     present();
     vt_menukey = k;

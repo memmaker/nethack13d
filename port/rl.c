@@ -15,6 +15,7 @@ extern int canseemon();
 extern char obj_to_let();
 extern char *doname();
 #include "func_tab.h"
+const char *rl_css(int olet);
 
 static char mode;                   /* 0, '_', '<' or '>' */
 static char known[COLNO][ROWNO], stood[COLNO][ROWNO];
@@ -227,12 +228,15 @@ static char *inv_menu(void)
     int n = 0, k;
 
     reopen = 0;
+    static const char *fg[52];
     for (o = invent; o && n < 52; o = o->nobj, n++)
-        snprintf(line[n], 80, "%c - %.74s", obj_to_let(o), doname(o)), it[n] = line[n];
+        snprintf(line[n], 80, "%c - %.74s", obj_to_let(o), doname(o)), it[n] = line[n], fg[n] = rl_css(o->olet);
     if (!n) { pline("You are empty handed."); return 0; }
     for (;;) {
         if (cur >= n) cur = n - 1;
+        vt_menu_fg = fg;                /* rows in the Inventory window's colours */
         cur = vt_menu(it, n, cur);
+        vt_menu_fg = 0;
         k = vt_menukey, o = nth(cur);
         if (k == '\n' || k == ' ' || k == '5' || k == BE_RIGHT || k == '6') {
             char *r = item_menu(o);
@@ -256,6 +260,7 @@ int rl_pick(const char *lets)
     const char *it[52];
     static char line[52][80];
     char let[52];
+    static const char *fg[52];
     struct obj *o;
     int n = 0, c;
 
@@ -263,9 +268,11 @@ int rl_pick(const char *lets)
     if (vt_queued() || !lets) return readchar();
     for (o = invent; o && n < 52; o = o->nobj)
         if (index(lets, obj_to_let(o)))
-            let[n] = obj_to_let(o), snprintf(line[n], 80, "%c - %.74s", let[n], doname(o)), it[n] = line[n], n++;
+            let[n] = obj_to_let(o), snprintf(line[n], 80, "%c - %.74s", let[n], doname(o)), it[n] = line[n], fg[n] = rl_css(o->olet), n++;
     if (!n) return readchar();
+    vt_menu_fg = fg;
     c = vt_menu(it, n, 0);
+    vt_menu_fg = 0;
     if (vt_menukey == '\n' || vt_menukey == ' ' || vt_menukey == '5') return let[c];
     if (vt_menukey == '0' || vt_menukey == BE_LEFT) return 033;
     return vt_menukey < 0x100 ? vt_menukey : 033;
@@ -367,14 +374,17 @@ const char *rl_css(int olet)
     return "";
 }
 
-/* Inventory window: "<css colour>\ta - item" per line */
-char *rl_invtext(void)
+/* Inventory window: "<css colour>\t<tile>\t<row>" per line. With icons
+   (a tile set is on) the row is "a)   item" and the page centres the icon
+   on columns 2-4; without, "a) ! item" with the item's own symbol. */
+char *rl_invtext(int icons)
 {
-    static char b[52 * 80];
+    static char b[52 * 100];
     struct obj *o;
     int n = 0;
     b[0] = 0;
-    for (o = invent; o && n < (int)sizeof b - 80; o = o->nobj)
-        n += snprintf(b + n, 80, "%s\t%c - %.64s\n", rl_css(o->olet), obj_to_let(o), doname(o));
+    for (o = invent; o && n < (int)sizeof b - 100; o = o->nobj)
+        n += snprintf(b + n, 100, "%s\t%d\t%c) %c %.64s\n", rl_css(o->olet), icons ? tile_obj(o) : -1,
+                      obj_to_let(o), icons ? ' ' : o->olet, doname(o));
     return b;
 }

@@ -8,6 +8,8 @@ void be_init(int c, int r);
 void be_frame(chtype s[][80]);                   /* whole 80x24 screen */
 int tile_for(int sy, int sx, int ch, int *under); /* port/tiles.c */
 int map_char(int sy, int sx);
+struct monst; struct obj;
+int tile_mon(struct monst *m), tile_obj(struct obj *o), tile_gold(void);
 int vt_cooked(void);                  /* tty still echoes (before setftty) */
 #define MAP0 1          /* first map row */
 #define MAP1 22         /* last map row */
@@ -26,3 +28,5 @@ void vt_push(const char *keys);
 int vt_queued(void);                  /* keys the game reads next */
 int vt_menu(const char **item, int n, int cur);  /* box; returns cursor, key in vt_menukey */
 extern int vt_menukey;                           /* key that ended vt_menu */
+extern const char **vt_menu_fg;   /* per-item CSS colour for the next vt_menu (the game's own pop-ups), or 0 */
+extern const char *vt_rowfg[24];  /* per-screen-row colour while a menu is up (web pop-up) */
