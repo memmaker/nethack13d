@@ -5,7 +5,7 @@ set -e
 cd "$(dirname "$0")/.."
 OUT=web/dist SEED=web/seed
 rm -rf "$OUT" "$SEED" && mkdir -p "$OUT" "$SEED"
-make -s rumors data onames.h date.h # makedefs writes them here (save/ is a local playground)
+make -s CC="${HOSTCC:-cc} -std=gnu89 -w" rumors data onames.h date.h # makedefs writes them here (save/ is a local playground)
 cp help hh data rumors "$SEED/"
 SRCS=$(sed -n '/^HACKCSRC/,/[^\\]$/p' Makefile.unix | tr -d '\\' | sed 's/HACKCSRC =//' | sed 's/main\.c/unixmain.c/; s/tty\.c/unixtty.c/; s/unix\.c/unixunix.c/')
 emcc -O2 $EMFLAGS -std=gnu99 -w -D_GNU_SOURCE -fcommon -Dusleep=hk_usleep \
