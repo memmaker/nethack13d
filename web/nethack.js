@@ -8,7 +8,7 @@
 (function () {
 	'use strict';
 
-	var DIR = '/hack', SAVES = DIR + '/save', SEED = '/seed';
+	var DIR = RvipApp.dir, SAVES = DIR + '/save', SEED = '/seed';
 	var KEEP = { 'web-layout.json': 1, help: 1, hh: 1, data: 1, rumors: 1, news: 1, perm: 1, record: 1, save: 1 };
 	var FONT = '"DejaVu Sans Mono", Menlo, Consolas, "Liberation Mono", monospace';
 	var FG = '#d7d7d7', A_STANDOUT = 0x10000, MAP0 = 1, MAP1 = 22;
