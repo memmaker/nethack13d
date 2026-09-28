@@ -9,7 +9,7 @@
 	'use strict';
 
 	var DIR = RvipApp.dir, SAVES = DIR + '/save', SEED = '/seed';
-	var KEEP = { 'web-layout.json': 1, help: 1, hh: 1, data: 1, rumors: 1, news: 1, perm: 1, record: 1, save: 1 };
+	var KEEP = { 'web-layout.json': 1, 'web-tiles': 1, help: 1, hh: 1, data: 1, rumors: 1, news: 1, perm: 1, record: 1, save: 1 };
 	var FONT = '"DejaVu Sans Mono", Menlo, Consolas, "Liberation Mono", monospace';
 	var FG = '#d7d7d7', A_STANDOUT = 0x10000, MAP0 = 1, MAP1 = 22;
 	/* tile sets (same slots, port/mktiles.py); None = text: cells fall back to the screen's characters */
@@ -28,7 +28,9 @@
 	var set = 'dawn', sheets = {}, tilesReady = false, atCmd = false;
 
 	function $(id) { return document.getElementById(id); }
-	function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { } return null; }
+	/* the tile choice lives in DIR/web-tiles (IndexedDB, never localStorage); written only after it was read */
+	var prefs = false;
+	function saveTiles(v) { if (!prefs) return; try { Module.FS.writeFile(DIR + '/web-tiles', v); app.sync(); } catch (e) { } }
 
 	/* ---------- drawing ---------- */
 	/* Windows (as ~/Games/rogue3.6/web): the map rows as tiles in their own
@@ -187,7 +189,7 @@
 	}
 	function setTiles(s) {
 		set = SETS[s] ? s : 'dawn';
-		store('nh13d-tileset', set);
+		saveTiles(set);
 		$('btn-tiles').textContent = 'Tiles: ' + SETS[set][1];
 		renderMapSel();
 		tilesReady = false;
@@ -367,6 +369,8 @@
 				try { FS.mkdir(SAVES); } catch (e) { }
 				var s = saveFile();
 				if (s) Module.arguments.push('-u', s.replace(/^\d+/, ''));
+				prefs = true;
+				try { var ts = FS.readFile(DIR + '/web-tiles', { encoding: 'utf8' }); if (ts !== set) setTiles(ts); } catch (e) { }
 				Module.removeRunDependency('idbfs');
 			});
 		}],
@@ -383,7 +387,7 @@
 	document.addEventListener('DOMContentLoaded', function () {
 		cv = document.querySelector('#game canvas');
 		ctx = cv.getContext('2d');
-		setTiles(store('nh13d-tileset'));
+		setTiles();
 		$('btn-tiles').onclick = function () { setTiles(ORDER[(ORDER.indexOf(set) + 1) % ORDER.length]); };
 		RvipWM.dropdown($('btn-file'), $('menu-file'));
 		fetch('fonts.json').then(function (r) { return r.json(); }).then(function (list) {
