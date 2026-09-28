@@ -17,7 +17,7 @@ emcc -O2 $EMFLAGS -std=gnu99 -w -D_GNU_SOURCE -fcommon -Dusleep=hk_usleep \
 	-sALLOW_MEMORY_GROWTH -sEXIT_RUNTIME=1 -sINITIAL_MEMORY=32MB \
 	-sEXPORTED_FUNCTIONS=_main \
 	-sEXPORTED_RUNTIME_METHODS=FS,IDBFS,ENV,HEAPU32,HEAP32,addRunDependency,removeRunDependency \
-	-sFORCE_FILESYSTEM -lidbfs.js -sENVIRONMENT=web
+	-Wl,--wrap=exit -sFORCE_FILESYSTEM -lidbfs.js -sENVIRONMENT=web
 rm -rf "$SEED"
 cp web/index.html web/nethack.js port/tiles-dawn.png port/tiles-dawn-1.png port/tiles.png "$OUT/"
 # fonts for the Font choosers: the index page's fonts/ (loaded from ../fonts/<name>.woff)
