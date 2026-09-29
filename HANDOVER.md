@@ -1,111 +1,54 @@
-# NetHack 1.3d — RVIP
+# NetHack 1.3d — handover
 
-## RVIP progress
-- Stage 7 (web) done (2026-09-25): https://ruzzoli.de/roguelikes/nethack13d/
-  - Files: `port/be_web.c`, `port/termcap-web.c`, `port/web-inc/`
-    (hkio.h, sgtty.h stub), `port/proto.h`, `web/` (nethack.js, index.html,
-    make-help.py, build.sh, deploy.sh). Build `sh web/build.sh`.
-  - Windows as Hack: map, Messages, Status + Inventory (right of the map;
-    C `rl_invtext()` at the command prompt → `js_inv`). Fixed width, no gutter.
-  - wasm traps fixed: `port/proto.h` (force-included via compat.h, native
-    too) prototypes K&R functions; pline/panic/impossible/error are stdarg
-    now; mhitu `xmonnam` got its 2nd arg. `-fcommon`, gnu99.
-  - Web: `link()` unsupported → macro in `getlock` (unixunix.c); page sets
-    `HACKDIR`; `-u <name>` from the save file so reload restores.
-  - Autosave `rl_autosave()` (port/rl.c) as Hack; unshuffles oc_descr before
-    `dorecover` (restnames expects it). X11 test knob `HACK_AUTOSAVE=1`.
-  - `auto_more` (topl.c, as Hack c6fc008) on by default; `be_msg` hook.
-  - deploy.sh has Hack's push guard; stage 8 must add own remote first
-    (stage 7 was rsynced by hand).
-  - Next: stage 8 (publish).
-- Stage 6 done (2026-09-25). Next: stage 7 (web, as Hack: C picks tiles, JS blits).
-  - Docs: `nethack13d.html` via `parse_hack()` (reads root `hh`) + GAMES entry
-    in `~/Desktop/Games/Roguelikes/Docs/build-docs.py`; guide + saving in
-    `guides.py`. Explore key `_` documented (x = spells).
-  - Sound: none (upstream has none). Web: sound stays off.
-- Stage 5 done (2026-09-25). Next: stage 6 (docs + sound).
-  - `play.sh [nethack]`: HACKDIR=save/ (playground, git-ignored; `make rumors
-    data` if missing), TERM=vt100, HACK_TILESET. Window 1440x430 at +0+22.
-  - Shortcut `~/Desktop/Games/Roguelikes/NetHack 1.3d.app`, icon = DawnLike
-    valkyrie (tile 81). Tested: shortcut starts the game.
-- Stage 4 done (2026-09-25). Next: stage 5 (launcher + shortcut). Tiles as Hack:
-  DawnLike default, NetHack 3.6 switchable (`HACK_TILESET=nethack`).
-  - `port/mktiles.py` (from Hack; reads monst.c, dog.c etc., objects.h incl.
-    SPELL) writes `port/tiles-dawn.png/.rgba`, `port/tiles.png/.rgba`,
-    `port/tilemap.h` (394 slots; DawnLike misses only egg; unknown
-    appearances = stable hashed pick in class). NetHack sources: `port/nethack/`.
-    Credits `port/TILES-CREDITS.txt`. Makefile: port objs depend on tilemap.h.
-  - `port/tiles.c` from Hack plus: 12 roles (`P:`), polyself (`u.usym` ->
-    `mons[u.umonnum]`), fountain, throne (typ THRONE, else `\` object), web
-    (trap WEB, else `"` amulet), `+` door only if typ DOOR/LDOOR (else
-    spellbook), traps pit/spiked/squeaky/magic/level tele/anti-magic/rust.
-  - `be_x11.c` unchanged (cell 18, nearest-neighbour); env `HACK_TILES`,
-    `HACK_CELL`, `HACK_TEXT`, `HACK_POS`. Sheets read from `port/` rel. cwd.
-  - Tested live: both sets, inventory box over map, 300 random keys alive.
-  - Doorways (typ DOOR/LDOOR) draw floor: 1.3d has no open/close (`doopen`
-    commented out). Web (stage 7): C decides tiles, JS only blits (user rule).
-- Stage 3 done (2026-09-25). Next: stage 4 (tiles: DawnLike default + NetHack switchable, as Hack).
-  - Ported from Hack's `port/rl.c`: Enter = `cmd_menu()` (parses `Commands:`
-    lines of `help`, "\t<key>\t<text>") plus every `extcmdlist` entry as
-    "#  name: desc" (choosing pushes "name\n" via `vt_push` after `#`).
-    help gained A, V, @, # lines.
-  - `i` = `inv_menu()` / `item_menu()` / `act()`; getobj() (invent.c) returns
-    `rl_obj` once and its first key comes from `rl_pick(lets)`. 1.3d extras:
-    spellbook main action `X` (transcribe), `#dip` in every item menu.
-  - Tested live: Enter menu (scrolls), #pray from menu, i -> bow -> wield,
-    `t` prompt cursor list; 400 random keys, game alive.
-- Stage 2 done (2026-09-25). Next: stage 3 (Enter menu + inventory).
-  - X11 window: `port/vt.c`, `vt.h`, `be_x11.c` from Hack (title
-    "NetHack 1.3d"); vt.c also strips termcap padding `$<n>`.
-    `port/tiles.c` = glyph-only `vt_map` + `vt_cooked` (tiles: stage 4).
-    Makefile.unix: `POBJ` built with `-std=gnu99`, links X11/Xft.
-  - `port/rl.c`: `_` = explore (`x` is spells in 1.3d), `<`/`>` off the
-    stairs walk to known ones. Hook: `rhack()` in cmd.c calls `rl_parse()`
-    instead of `parse()`; one step key per turn while a mode runs.
-  - Known grid = own `known[][]` OR'd from `levl[x][y].seen`; reset per
-    `dlevel`. Boulders (object `ENORMOUS_ROCK`) and seen traps block paths.
-    Tame monsters may be walked into (swap or "You stop..." message stops
-    the walk); other adjacent displayed monsters block the first step.
-  - Stops: new message (`vt_msgs`), key, no movement, visible hostile
-    (explore only). help/hh document `_`, `<`, `>`.
-  - Tested live (X11): explore mapped a whole level, `>` walked across it
-    and descended, `<` walked to the upstairs.
-  - Test: `-D` needs `getlogin()` == "wizard", so no wizard mode.
-    xsend keysyms: `underscore`, `less`, `greater`.
-  - Cosmetic, later: prompts before the map (character pick) drawn in
-    map-cell spacing (rows 1-22 are map rows).
-- Stage 1 done (2026-09-25). Next: stage 2 (explore + stairs).
-  - Source: github.com/bhaak/NetHack-1.3d (full history; upstream = bcec982).
-  - Case O, like Hack (`~/Games/hack`, O-Hack in RVIP.md): termcap game,
-    flat source dir, `Makefile` -> `Makefile.unix`; `unixmain.c`,
-    `unixtty.c`, `unixunix.c` are copied to main.c/tty.c/unix.c by make
-    (edit the unix* files, never the copies).
-  - Build: `make nethack CC="cc -std=gnu89 -w -Wno-incompatible-function-pointer-types -Wno-return-mismatch -include port/compat.h"`
-    then `make rumors data`. Run: `HACKDIR=$PWD/save TERM=vt100 ./nethack`
-    (save/ = playground: help hh rumors data perm record, save/save/).
-  - Port fixes: `#define BSD` (sgtty.h), `port/compat.h` declares libc
-    (64-bit pointers were cut to int), `getdate` -> `hgetdate`, varargs
-    `panic/error/impossible` take `char *`, `iso8601` declared in dump.c,
-    makedefs/link use `$(CC)`.
-  - ASan found: startup SEGV (pointer truncation, fixed by compat.h),
-    `let_to_name` buffer overflow with vt100 HI/HE (upstream; buf 64).
-    Random-key ASan runs afterwards clean.
-  - Quirks: argv[0] must contain a `/` (gethdate stats it via PATH);
-    termcap padding `$<2>` printed literally — VT layer must strip it;
-    a killed game leaves `save/<user>.0` lock.
-  - Tiles (user): DawnLike default + NetHack switchable, as Hack.
+Port of NetHack 1.3d (all RVIP stages done): web build live at
+https://ruzzoli.de/roguelikes/nethack13d/, plus a native X11 tiles build.
+Procedure: `~/Games/rvip-tools/RVIP.md`. Sister port: `~/Games/hack` (most
+`port/` code came from there).
 
-### Stage 8 publish (done)
-- Repo https://github.com/memmaker/nethack13d (remote `memmaker`, branch `master`), upstream bhaak @ bcec982, README.md links compare view.
-- Game redeployed via `web/deploy.sh`; card + tree link (NetHack node → nethack13d/) live on the index; card has no Info button yet.
-- Next: stage 9 shrine (`shrine/nethack13d.html`, add Info button + tree ✦).
+## Source and repo
+- github.com/bhaak/NetHack-1.3d (full history; upstream = `bcec982`). Repo
+  https://github.com/memmaker/nethack13d (remote `memmaker`, branch `master`);
+  README links the compare view.
+- Case O, like Hack: termcap game, flat source dir, `Makefile` → `Makefile.unix`;
+  `unixmain.c`, `unixtty.c`, `unixunix.c` are copied to main.c/tty.c/unix.c by
+  make (edit the unix* files, never the copies).
 
-### Stage 9 shrine (done)
-- https://ruzzoli.de/roguelikes/shrine/nethack13d.html live; card Info, tree ✦, game title link checked (200).
-- Only one screenshot (steps): `shot.js` doesn't capture text windows/pop-ups, and level 1 stairs weren't found for a fight shot. Add title/fight/inventory shots later.
-- No walkthrough for 1.3d found; manual = nethack.6 + help copied.
-- Prompt line (RVIP step 5 / W4, 2026-09-26): the live message row is shown in a
-  box over the map by `RvipWM.prompt` (rvip-wm.js). A key hides it only while
-  the game waits for a command, so a question stays up until answered.
-  Here: `js_key(rl_at_prompt)` in `port/be_web.c`; `web/nethack.js` sends screen
-  row 0 (`rowText(0)`) from `draw()`.
+## Build and deploy
+- Web: `sh web/build.sh` → `web/dist` (runs makedefs natively itself, then emcc
+  + Asyncify; no separate native build needed). `web/deploy.sh` deploys.
+  Shared page code from the parent folder: `../rvip-wm.js`, `../rvip-app.js`.
+- Native X11 (for testing/ASan; `./play.sh [nethack]`, Desktop shortcut
+  `~/Desktop/Games/Roguelikes/NetHack 1.3d.app`):
+  `make nethack CC="cc -std=gnu89 -w -Wno-incompatible-function-pointer-types -Wno-return-mismatch -include port/compat.h"`
+  then `make rumors data`. `save/` = playground (git-ignored). X11 env knobs:
+  `HACK_TILESET`, `HACK_TILES`, `HACK_CELL`, `HACK_TEXT`, `HACK_POS`,
+  `HACK_AUTOSAVE=1` (autosave at every prompt).
+
+## File map
+- `port/rl.c`: explore `_` (`x` is spells in 1.3d), `<`/`>` off stairs walk to
+  known ones (press again to take them), Enter = `cmd_menu()` (parses `help`
+  + `extcmdlist`), `i` = `inv_menu()`/`item_menu()`/`act()`, `rl_autosave()`.
+  Hook: `rhack()` in cmd.c calls `rl_parse()` instead of `parse()`.
+- `port/tiles.c` (C picks tiles; JS only blits), `port/mktiles.py` →
+  `port/tiles-dawn*.png`, `port/tiles.png`, `port/tilemap.h`; credits
+  `port/TILES-CREDITS.txt`. DawnLike default, NetHack 3.6 set switchable.
+- `port/vt.c`/`vt.h` (VT layer, strips termcap padding `$<n>`), `port/be_web.c`
+  (web backend, `js_key(rl_at_prompt)`, beacon `js_beacon`), `port/be_x11.c`,
+  `port/termcap-web.c`, `port/web-inc/`, `port/compat.h` (libc declarations;
+  64-bit pointers were cut to int), `port/proto.h` (K&R prototypes for wasm).
+- `web/nethack.js` (draws), `web/index.html`, `web/make-help.py`.
+
+## Facts and gotchas
+- Web saves live in this game's own IndexedDB folder (`RvipApp.dir`); player
+  name and tile set are stored there too (no localStorage). User decision: old
+  saves in the former shared `/hack` DB are abandoned (no migration).
+- `rl_autosave()` unshuffles `oc_descr` before `dorecover` (restnames expects it).
+- `auto_more` on by default (topl.c).
+- `link()` unsupported on the web → macro in `getlock` (unixunix.c).
+- argv[0] must contain a `/`; a killed native game leaves a `save/<user>.0` lock.
+- `-D` needs `getlogin()` == "wizard": no wizard mode.
+- 1.3d has no open/close: doorways draw floor. No sound upstream, none on the web.
+
+## Open
+- Native X11: prompts before the map (character pick) are drawn in map-cell
+  spacing (cosmetic).
